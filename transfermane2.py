@@ -5,6 +5,7 @@ import telegram
 import MySQLdb
 import geopy.distance
 import datetime
+import os
 
 from telegram import Update, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, InlineQueryHandler, CallbackContext
@@ -395,9 +396,9 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 if __name__ == '__main__':
-    print(sys.version)
+    token = os.environ['TOKEN']
     # Se ejecuta para el /start
-    application = ApplicationBuilder().token('5492068105:AAE0swbyKtrzF1DxskthAcAGuj14Xn8uxQc').build()
+    application = ApplicationBuilder().token(token).build()
     
     start_handler = CommandHandler('start', start)
     entrada_handler = CommandHandler('entrada', fichajeEntrada)
