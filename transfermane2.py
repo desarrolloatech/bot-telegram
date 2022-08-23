@@ -293,7 +293,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             #FIN - LOG
 
             #Si la distancia es menor que 11 entonces sí está en el sitio y procedemos a registrar el fichaje
-            if distancia < 0.020:
+            if distancia < 0.045:
                 #Podemos preguntar por el fichaje
                 sql = """SELECT id, horaini1, horafin1, horaini2, horafin2 FROM MotivoHoraBot WHERE idPersonal = %s AND fecha = CAST(%s as DATE)"""
                 cursor.execute(sql, (idTrabajador,fechaHoy,))
