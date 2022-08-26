@@ -6,6 +6,9 @@ import MySQLdb
 import geopy.distance
 import datetime
 import os
+import pytz
+
+
 
 from telegram import Update, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, InlineQueryHandler, CallbackContext
@@ -17,7 +20,8 @@ logging.basicConfig(
 )
 
 #Variables globales
-now = datetime.datetime.now().strftime('%H:%M:%S')
+zone_fr = pytz.timezone('Europe/Paris')
+now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
 
 horaIni1 = "Hora inicio 1"
 horaFin1 = "Hora fin 1"
@@ -227,6 +231,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     #Cuando se pulsa cualquier botón ya entra aquí ya que coge la ubicación:
     global codigoTrabajador
     global idTrabajador
+    global zone_fr
     global now
     global current_pos
     tipoFichaje = update.message.reply_to_message.text
@@ -301,7 +306,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 m = cursor.fetchone()
 
                 if m is None:
-                    now = datetime.datetime.now().strftime('%H:%M:%S')
+                    now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
                     sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
                     if "ENTRADA" in tipoFichaje:
@@ -343,7 +348,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         if m[2]:
                             sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
                     idMotivoHoraBot = m[0]
-                    now = datetime.datetime.now().strftime('%H:%M:%S')
+                    now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
                     cursor.execute(sql, (now, idMotivoHoraBot,))
                     db.commit()
                     
