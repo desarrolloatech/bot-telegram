@@ -108,7 +108,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     #INICIO - LOG
     cursor=db.cursor()
     sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s,'start', 'Sin usuario', 'Se inicia la conexión', 'Sin posición', 'Sin sucursal')"""
-    cursor.execute(sql, (fecha_hoy))
+    cursor.execute(sql, (fecha_hoy,))
     db.commit()
     cursor.close()
     #FIN - LOG
@@ -165,7 +165,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             #INICIO - LOG
             cursor=db.cursor()
             sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'echo', %s, 'Se inserta incorrectamente el código del trabajador', 'Sin posición', 'Sin sucursal')"""
-            cursor.execute(sql, (fecha_hoy, update.message.text))
+            cursor.execute(sql, (fecha_hoy, update.message.text,))
             db.commit()
             cursor.close()
             #FIN - LOG
@@ -322,9 +322,9 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
                     if "ENTRADA" in tipoFichaje:
-                        cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, now, None, None, None))
+                        cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, now, None, None, None,))
                     if "SALIDA" in tipoFichaje:
-                        cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, None, now, None, None))
+                        cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, None, now, None, None,))
                     db.commit()
                 if m:
                     if "ENTRADA" in tipoFichaje:
