@@ -22,7 +22,7 @@ logging.basicConfig(
 #Variables globales
 zone_fr = pytz.timezone('Europe/Paris')
 now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
-fecha_hoy = datetime.today()
+fecha_hoy = datetime.datetime.today()
 
 horaIni1 = "Hora inicio 1"
 horaFin1 = "Hora fin 1"
@@ -95,7 +95,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     codigoTrabajador = 0
     current_pos = ""
 
-    fecha_hoy = datetime.today()
+    fecha_hoy = datetime.datetime.today()
 
 
     #Nos debe enviar su identificador, hasta que no lo haga no puede continuar
@@ -157,7 +157,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global fecha_hoy
 
 
-    fecha_hoy = datetime.today()
+    fecha_hoy = datetime.datetime.today()
 
     if not checkCodigoTrabajador:
         validateNumeric = update.message.text.isnumeric()
@@ -244,7 +244,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global current_pos
     global fecha_hoy
 
-    fecha_hoy = datetime.today()
+    fecha_hoy = datetime.datetime.today()
 
     tipoFichaje = update.message.reply_to_message.text
     fin = 0
