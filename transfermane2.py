@@ -276,6 +276,9 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ultimaCoordenadaCentro = ""
         ultimoNombreSucursal = ""
         entraDis = False
+        resultOk = True
+        mensajeError = ""
+
         for suc in m:
             idSucursal = suc
 
@@ -324,61 +327,99 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     if "ENTRADA" in tipoFichaje:
                         cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, now, None, None, None,))
                     if "SALIDA" in tipoFichaje:
+
+                        mensajeError="Para fichar salida tienes que fichar primero entrada."
+
                         await context.bot.send_message(
                             chat_id=update.effective_chat.id
-                             , text="Para fichar salida tienes que fichar primero entrada. Gracias"
+                             , text=mensajeError
                         )
                     db.commit()
                 if m:
                     if "ENTRADA" in tipoFichaje:
-                        #Si no tiene horaIni1 y no tiene horaIni2, miramos si tiene horaFin1
-                        if m[1] is None and m[3] is None:
-                            #Si no tiene horaFin1 ni horaFin2
-                            if m[2] is None and m[4] is None and m[1] is None:
-                                sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME) WHERE id = %s"""
-                            #Si no tiene horaFin2 y sí tiene horaFin2
-                            elif m[2] is None and m[4] and m[3] is None:
-                                sql = """UPDATE MotivoHoraBot SET horaini2 = CAST(%s as TIME) WHERE id = %s"""
-                            #Si tiene horaFin1 y no tiene horaFin2
-                            elif m[2] and m[4] is None and m[1] is None:
-                                sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME) WHERE id = %s"""
-                        #Si tiene horaIni1 y no tiene horaIni2
-                        if m[1] and m[3] is None:
-                            sql = """UPDATE MotivoHoraBot SET horaini2 = CAST(%s as TIME) WHERE id = %s"""
+                        
+                        #Si no exite horaIni1 se introduce del tiron.
+                        if m[1] is None:
+                            sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME) WHERE id = %s"""
+                        else:
+                            #Si existe horaIni1 y no ha fichado salida de la horaFin1 no puede fichar otra entrada. 
+                            if m[2] is None:
+                                resultOk = False
+
+                                mensajeError="Para poder fichar otra entrada tienes que fichar la salida de la primera entrada."
+
+                                await context.bot.send_message(
+                                chat_id=update.effective_chat.id
+                                , text=mensajeError)
+                            else:
+                                #Si la horaIni2 esta vacia esta introduciendo la segunda entrada.
+                                if m[3] is None:
+                                    sql = """UPDATE MotivoHoraBot SET horaini2 = CAST(%s as TIME) WHERE id = %s"""
+                                else:
+                                    resultOk = False
+
+                                    mensajeError="Ya no puedes fichar mas entradas en la jornada de hoy."
+
+                                    #Si ya exite la segunda entrada yo no puede fichar mas en el dia de hoy.
+                                    await context.bot.send_message(
+                                    chat_id=update.effective_chat.id
+                                    , text=mensajeError)
 
                     if "SALIDA" in tipoFichaje:
-                        print("Entra")
-                        #Si no tiene horaFin1 y no tiene horaFin2
-                        if m[2] is None and m[4] is None:
-                            #Si no tiene horaIni1 y no tiene horaIni2
-                            if m[1] is None and m[3] is None:
+
+                        #Si fechaIni1 es vacio no puede fichar salida
+                        if m[1] is None:
+
+                            resultOk = False
+
+                            mensajeError="Para poder fichar salida primero tienes que fichar una entrada."
+
+                            await context.bot.send_message(
+                            chat_id=update.effective_chat.id
+                            , text=mensajeError)
+
+                        else:
+                            if m[2] is None:
                                 sql = """UPDATE MotivoHoraBot SET horafin1 = CAST(%s as TIME) WHERE id = %s"""
-                            #Si no tiene horaIni1 y sí tiene horaIni2
-                            elif m[1] is None and m[3]:
-                                sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
-                            #Si tiene horaIni1 y no tiene horaIni2
-                            elif m[1] and m[3] is None:
-                                sql = """UPDATE MotivoHoraBot SET horafin1 = CAST(%s as TIME) WHERE id = %s"""
-                        #Si tiene horaFin1 y no tiene horaFin2
-                        if m[2]:
-                            sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
+                            else:
+                                if m[3] is None:
+
+                                    resultOk = False
+
+                                    mensajeError="Para poder fichar salida  primero tienes que fichar una entrada."
+
+                                    await context.bot.send_message(
+                                    chat_id=update.effective_chat.id
+                                    , text=mensajeError)
+
+                                else:
+                                    sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
+                    
+                if resultOk:
+
                     idMotivoHoraBot = m[0]
                     now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
                     cursor.execute(sql, (now, idMotivoHoraBot,))
                     db.commit()
-                    
 
-                await context.bot.send_message(
-                    chat_id=update.effective_chat.id
-                    , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1)
-                )
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id
+                        , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1)
+                    )
 
-                #INICIO - LOG
-                cursor=db.cursor()
-                sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se inserta el fichaje correctamente', %s, %s)"""
-                cursor.execute(sql, (fecha_hoy, distancia, idSucursal,))
-                db.commit()
-                #FIN - LOG
+                    #INICIO - LOG
+                    cursor=db.cursor()
+                    sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se inserta el fichaje correctamente', %s, %s)"""
+                    cursor.execute(sql, (fecha_hoy, distancia, idSucursal,))
+                    db.commit()
+                    #FIN - LOG
+                else:
+                    #INICIO - LOG
+                    cursor=db.cursor()
+                    sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', %s, %s, %s)"""
+                    cursor.execute(sql, (fecha_hoy, mensajeError ,distancia, idSucursal,))
+                    db.commit()
+                    #FIN - LOG
 
                 fin = 1
 
