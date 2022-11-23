@@ -329,7 +329,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                         await context.bot.send_message(
                         chat_id=update.effective_chat.id
-                        , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Hora Registrada: " + str(now)
+                        , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1)
                         )
 
                     if "SALIDA" in tipoFichaje:
@@ -421,7 +421,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                     await context.bot.send_message(
                         chat_id=update.effective_chat.id
-                        , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Código Fichaje: "+ str(idMotivoHoraBot) +" Hora Registrada: " + str(now)"
+                        , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Código Fichaje: "+ str(idMotivoHoraBot)
                     )
 
                     #INICIO - LOG
