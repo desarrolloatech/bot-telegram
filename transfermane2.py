@@ -327,6 +327,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     if "ENTRADA" in tipoFichaje:
                         cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, now, None, None, None,))
                     if "SALIDA" in tipoFichaje:
+                        
+                        resultOk = False
 
                         mensajeError="Para fichar salida tienes que fichar primero entrada."
 
@@ -393,7 +395,16 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                     , text=mensajeError)
 
                                 else:
-                                    sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
+                                    if m[4] is None:
+                                        sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
+                                    else:
+                                        resultOk = False
+
+                                        mensajeError="Ya no puedes fichar mas salidas en la jornada de doy."
+
+                                        await context.bot.send_message(
+                                        chat_id=update.effective_chat.id
+                                        , text=mensajeError)
                     
                 if resultOk:
 
