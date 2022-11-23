@@ -324,7 +324,10 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     if "ENTRADA" in tipoFichaje:
                         cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, now, None, None, None,))
                     if "SALIDA" in tipoFichaje:
-                        cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, None, now, None, None,))
+                        await context.bot.send_message(
+                            chat_id=update.effective_chat.id
+                             , text="Para fichar salida tienes que fichar primero entrada. Gracias"
+                        )
                     db.commit()
                 if m:
                     if "ENTRADA" in tipoFichaje:
