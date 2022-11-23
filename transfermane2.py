@@ -326,12 +326,11 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
                     if "ENTRADA" in tipoFichaje:
                         cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, now, None, None, None,))
-
+                        
                         await context.bot.send_message(
                         chat_id=update.effective_chat.id
                         , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1)
                         )
-
                     if "SALIDA" in tipoFichaje:
                         
                         resultOk = False
@@ -421,7 +420,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                     await context.bot.send_message(
                         chat_id=update.effective_chat.id
-                        , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Código Fichaje: "+ str(idMotivoHoraBot)
+                        , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1)
                     )
 
                     #INICIO - LOG
