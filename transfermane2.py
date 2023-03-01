@@ -33,9 +33,13 @@ horaFin2 = "Hora fin 2"
 checkCodigoTrabajador = False
 codigoTrabajador = 0
 idTrabajador = 0
+idEmpresa = 0
 current_pos = ""
 
-
+bd_bbdd = os.environ['bd_bbdd']
+host_bbdd = os.environ['host_bbdd']
+pass_bbdd = os.environ['pass_bbdd']
+user_bbdd = os.environ['user_bbdd']
 
 #HOMESTEAD
 """ db = MySQLdb.connect(host="192.168.10.10",    # localhost
@@ -43,10 +47,10 @@ current_pos = ""
                  passwd="secret",  #  password
                  db="uati")        # name of the data base """
 try:
-    db = MySQLdb.connect(host="82.223.75.143",    # localhost
-                 user="root",         #  username
-                 passwd="0tran234del",  #  password
-                 db="transfermane")        # name of the data base
+    db = MySQLdb.connect(host=host_bbdd,    # localhost
+                 user=user_bbdd,         #  username
+                 passwd=pass_bbdd,  #  password
+                 db=bd_bbdd)        # name of the data base
     # If connection is not successful
 except:
     print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
@@ -55,10 +59,10 @@ except:
 def mysqlconnect():
     #Trying to connect
     try:
-        db = MySQLdb.connect(host="82.223.75.143",    # localhost
-                 user="root",         #  username
-                 passwd="0tran234del",  #  password
-                 db="transfermane")        # name of the data base
+        db = MySQLdb.connect(host=host_bbdd,    # localhost
+                 user=user_bbdd,         #  username
+                 passwd=pass_bbdd,  #  password
+                 db=bd_bbdd)        # name of the data base
     # If connection is not successful
     except:
         print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
@@ -154,6 +158,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global checkCodigoTrabajador
     global codigoTrabajador
     global idTrabajador
+    global idEmpresa
     global fecha_hoy
 
 
@@ -174,7 +179,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if validateNumeric:
             cursor=db.cursor()
 
-            sql = """SELECT apellidos, idPersonal FROM Personal WHERE codigotrabajador = %s;"""
+            sql = """SELECT apellidos, idPersonal, idEmpresa FROM Personal WHERE codigotrabajador = %s;"""
             valor = update.message.text
             
 
@@ -184,7 +189,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             codigoTrabajador = valor
             idTrabajador = m[1]
-
+            idEmpresa = m[2]
             resTxt = "Hola " + m[0] + ". Ahora puedes registrar tu jornada. Debes seleccionar el comando correspondiente del menú"
 
             checkCodigoTrabajador = True
@@ -239,6 +244,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     #Cuando se pulsa cualquier botón ya entra aquí ya que coge la ubicación:
     global codigoTrabajador
     global idTrabajador
+    global idEmpresa
     global zone_fr
     global now
     global current_pos
@@ -265,189 +271,206 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     idContrato = m[0]
 
-    cursor=db.cursor()
-    sql = """SELECT id_sucursal FROM personal_sucursal WHERE id_personal = %s;"""
-    cursor.execute(sql, (idTrabajador,))
-    m = cursor.fetchall()
+    if idEmpresa != 8:
 
-    if cursor.rowcount > 0:
-        ultimadistancia = ""
-        idUltimaSucrusal = 0
-        ultimaCoordenadaCentro = ""
-        ultimoNombreSucursal = ""
-        entraDis = False
-        resultOk = True
-        mensajeError = ""
 
-        for suc in m:
-            idSucursal = suc
+        cursor=db.cursor()
+        sql = """SELECT id_sucursal FROM personal_sucursal WHERE id_personal = %s;"""
+        cursor.execute(sql, (idTrabajador,))
+        m = cursor.fetchall()
 
-            #Cogemos las coordenadas de todas las sucursales en las que está inscrito este trabajador
-            sql = """SELECT latitud, longitud, nombre, idCliente FROM Sucursal WHERE idSucursal = %s;"""
-            cursor.execute(sql, (idSucursal,))
-            m = cursor.fetchone() 
+        if cursor.rowcount > 0:
+            ultimadistancia = ""
+            idUltimaSucrusal = 0
+            ultimaCoordenadaCentro = ""
+            ultimoNombreSucursal = ""
+            entraDis = False
+            resultOk = True
+            mensajeError = ""
 
-            coords_1 = (m[0], m[1])
+            for suc in m:
+                idSucursal = suc
 
-            nombreSucursal = m[2]
-            idCliente = m[3]
-            
+                #Cogemos las coordenadas de todas las sucursales en las que está inscrito este trabajador
+                sql = """SELECT latitud, longitud, nombre, idCliente FROM Sucursal WHERE idSucursal = %s;"""
+                cursor.execute(sql, (idSucursal,))
+                m = cursor.fetchone() 
 
-            distancia = geopy.distance.geodesic(current_pos, coords_1).km
+                coords_1 = (m[0], m[1])
 
-            if not entraDis:
-                ultimadistancia = distancia
-                entraDis = True
-            
-            if ultimadistancia >= distancia:
-                ultimadistancia = distancia
-                ultimaCoordenadaCentro = coords_1
-                ultimoNombreSucursal = nombreSucursal
-                idUltimaSucrusal = idSucursal
+                nombreSucursal = m[2]
+                idCliente = m[3]
+                
 
-            #INICIO - LOG
-            cursor=db.cursor()
-            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se coge las coordenadas de cada uno', %s, %s)"""
-            cursor.execute(sql, (fecha_hoy, distancia, idSucursal,))
-            db.commit()
-            #FIN - LOG
+                distancia = geopy.distance.geodesic(current_pos, coords_1).km
 
-            #Si la distancia es menor que 11 entonces sí está en el sitio y procedemos a registrar el fichaje
-            if distancia < 0.045:
-                #Podemos preguntar por el fichaje
-                sql = """SELECT id, horaini1, horafin1, horaini2, horafin2 FROM MotivoHoraBot WHERE idPersonal = %s AND fecha = CAST(%s as DATE)"""
-                cursor.execute(sql, (idTrabajador,fechaHoy,))
+                if not entraDis:
+                    ultimadistancia = distancia
+                    entraDis = True
+                
+                if ultimadistancia >= distancia:
+                    ultimadistancia = distancia
+                    ultimaCoordenadaCentro = coords_1
+                    ultimoNombreSucursal = nombreSucursal
+                    idUltimaSucrusal = idSucursal
 
-                m = cursor.fetchone()
+                #INICIO - LOG
+                cursor=db.cursor()
+                sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se coge las coordenadas de cada uno', %s, %s)"""
+                cursor.execute(sql, (fecha_hoy, distancia, idSucursal,))
+                db.commit()
+                #FIN - LOG
 
-                if m is None:
-                    now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
-                    sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
-                    if "ENTRADA" in tipoFichaje:
-                        cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, now, None, None, None,))
-                        
-                        await context.bot.send_message(
-                        chat_id=update.effective_chat.id
-                        , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1)
-                        )
-                    if "SALIDA" in tipoFichaje:
-                        
-                        resultOk = False
+                #Si la distancia es menor que 11 entonces sí está en el sitio y procedemos a registrar el fichaje
+                if distancia < 0.045:
+                    #Podemos preguntar por el fichaje
+                    sql = """SELECT id, horaini1, horafin1, horaini2, horafin2 FROM MotivoHoraBot WHERE idPersonal = %s AND fecha = CAST(%s as DATE)"""
+                    cursor.execute(sql, (idTrabajador,fechaHoy,))
 
-                        mensajeError="Para fichar salida tienes que fichar primero entrada."
+                    m = cursor.fetchone()
 
-                        await context.bot.send_message(
+                    if m is None:
+                        now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+                        sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
+                        if "ENTRADA" in tipoFichaje:
+                            cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, now, None, None, None,))
+                            
+                            await context.bot.send_message(
                             chat_id=update.effective_chat.id
-                             , text=mensajeError
-                        )
-                    db.commit()
-                if m:
-                    if "ENTRADA" in tipoFichaje:
-                        
-                        #Si no exite horaIni1 se introduce del tiron.
-                        if m[1] is None:
-                            sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME) WHERE id = %s"""
-                        else:
-                            #Si existe horaIni1 y no ha fichado salida de la horaFin1 no puede fichar otra entrada. 
-                            if m[2] is None:
+                            , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1)
+                            )
+                        if "SALIDA" in tipoFichaje:
+                            
+                            resultOk = False
+
+                            mensajeError="Para fichar salida tienes que fichar primero entrada."
+
+                            await context.bot.send_message(
+                                chat_id=update.effective_chat.id
+                                , text=mensajeError
+                            )
+                        db.commit()
+                    if m:
+                        if "ENTRADA" in tipoFichaje:
+                            
+                            #Si no exite horaIni1 se introduce del tiron.
+                            if m[1] is None:
+                                sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME) WHERE id = %s"""
+                            else:
+                                #Si existe horaIni1 y no ha fichado salida de la horaFin1 no puede fichar otra entrada. 
+                                if m[2] is None:
+                                    resultOk = False
+
+                                    mensajeError="Para poder fichar otra entrada tienes que fichar la salida de la primera entrada."
+
+                                    await context.bot.send_message(
+                                    chat_id=update.effective_chat.id
+                                    , text=mensajeError)
+                                else:
+                                    #Si la horaIni2 esta vacia esta introduciendo la segunda entrada.
+                                    if m[3] is None:
+                                        sql = """UPDATE MotivoHoraBot SET horaini2 = CAST(%s as TIME) WHERE id = %s"""
+                                    else:
+                                        resultOk = False
+
+                                        mensajeError="Ya no puedes fichar mas entradas en la jornada de hoy."
+
+                                        #Si ya exite la segunda entrada yo no puede fichar mas en el dia de hoy.
+                                        await context.bot.send_message(
+                                        chat_id=update.effective_chat.id
+                                        , text=mensajeError)
+
+                        if "SALIDA" in tipoFichaje:
+
+                            #Si fechaIni1 es vacio no puede fichar salida
+                            if m[1] is None:
+
                                 resultOk = False
 
-                                mensajeError="Para poder fichar otra entrada tienes que fichar la salida de la primera entrada."
+                                mensajeError="Para poder fichar salida primero tienes que fichar una entrada."
 
                                 await context.bot.send_message(
                                 chat_id=update.effective_chat.id
                                 , text=mensajeError)
+
                             else:
-                                #Si la horaIni2 esta vacia esta introduciendo la segunda entrada.
-                                if m[3] is None:
-                                    sql = """UPDATE MotivoHoraBot SET horaini2 = CAST(%s as TIME) WHERE id = %s"""
+                                if m[2] is None:
+                                    sql = """UPDATE MotivoHoraBot SET horafin1 = CAST(%s as TIME) WHERE id = %s"""
                                 else:
-                                    resultOk = False
+                                    if m[3] is None:
 
-                                    mensajeError="Ya no puedes fichar mas entradas en la jornada de hoy."
-
-                                    #Si ya exite la segunda entrada yo no puede fichar mas en el dia de hoy.
-                                    await context.bot.send_message(
-                                    chat_id=update.effective_chat.id
-                                    , text=mensajeError)
-
-                    if "SALIDA" in tipoFichaje:
-
-                        #Si fechaIni1 es vacio no puede fichar salida
-                        if m[1] is None:
-
-                            resultOk = False
-
-                            mensajeError="Para poder fichar salida primero tienes que fichar una entrada."
-
-                            await context.bot.send_message(
-                            chat_id=update.effective_chat.id
-                            , text=mensajeError)
-
-                        else:
-                            if m[2] is None:
-                                sql = """UPDATE MotivoHoraBot SET horafin1 = CAST(%s as TIME) WHERE id = %s"""
-                            else:
-                                if m[3] is None:
-
-                                    resultOk = False
-
-                                    mensajeError="Para poder fichar salida  primero tienes que fichar una entrada."
-
-                                    await context.bot.send_message(
-                                    chat_id=update.effective_chat.id
-                                    , text=mensajeError)
-
-                                else:
-                                    if m[4] is None:
-                                        sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
-                                    else:
                                         resultOk = False
 
-                                        mensajeError="Ya no puedes fichar mas salidas en la jornada de doy."
+                                        mensajeError="Para poder fichar salida  primero tienes que fichar una entrada."
 
                                         await context.bot.send_message(
                                         chat_id=update.effective_chat.id
                                         , text=mensajeError)
-                    
-                if resultOk:
 
-                    idMotivoHoraBot = m[0]
-                    now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
-                    cursor.execute(sql, (now, idMotivoHoraBot,))
-                    db.commit()
+                                    else:
+                                        if m[4] is None:
+                                            sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
+                                        else:
+                                            resultOk = False
 
-                    await context.bot.send_message(
-                        chat_id=update.effective_chat.id
-                        , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Codigo Fichaje: " + str(idMotivoHoraBot)
-                    )
+                                            mensajeError="Ya no puedes fichar mas salidas en la jornada de doy."
 
-                    #INICIO - LOG
-                    cursor=db.cursor()
-                    sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se inserta el fichaje correctamente', %s, %s)"""
-                    cursor.execute(sql, (fecha_hoy, distancia, idSucursal,))
-                    db.commit()
-                    #FIN - LOG
-                else:
-                    #INICIO - LOG
-                    cursor=db.cursor()
-                    sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', %s, %s, %s)"""
-                    cursor.execute(sql, (fecha_hoy, mensajeError ,distancia, idSucursal,))
-                    db.commit()
-                    #FIN - LOG
+                                            await context.bot.send_message(
+                                            chat_id=update.effective_chat.id
+                                            , text=mensajeError)
+                        
+                    if resultOk:
 
-                fin = 1
+                        idMotivoHoraBot = m[0]
+                        now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+                        cursor.execute(sql, (now, idMotivoHoraBot,))
+                        db.commit()
 
-                break
+                        await context.bot.send_message(
+                            chat_id=update.effective_chat.id
+                            , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Codigo Fichaje: " + str(idMotivoHoraBot)
+                        )
 
-        if not fin:
-            #Recorremos las sucursales nuevamente y vemos en cuál está más cerca
+                        #INICIO - LOG
+                        cursor=db.cursor()
+                        sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se inserta el fichaje correctamente', %s, %s)"""
+                        cursor.execute(sql, (fecha_hoy, distancia, idSucursal,))
+                        db.commit()
+                        #FIN - LOG
+                    else:
+                        #INICIO - LOG
+                        cursor=db.cursor()
+                        sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', %s, %s, %s)"""
+                        cursor.execute(sql, (fecha_hoy, mensajeError ,distancia, idSucursal,))
+                        db.commit()
+                        #FIN - LOG
+
+                    fin = 1
+
+                    break
+
+            if not fin:
+                #Recorremos las sucursales nuevamente y vemos en cuál está más cerca
 
 
+                #INICIO - LOG
+                cursor=db.cursor()
+                sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'No se ha podido vertificar el fichaje. No está en ningún centro cerca', %s, 'Sin sucursal')"""
+                cursor.execute(sql, (fecha_hoy, idTrabajador,))
+                db.commit()
+                cursor.close()
+                #FIN - LOG
+
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id
+                    , text="No se ha podido realizar el fichaje. Verifica que estás en el centro asignado. Habla con tu supervisor. Gracias. Nombre del centro: " + ultimoNombreSucursal +  ". Distancia total: " + str(ultimadistancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(ultimaCoordenadaCentro)
+                )           
+        
+        else:
             #INICIO - LOG
             cursor=db.cursor()
-            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'No se ha podido vertificar el fichaje. No está en ningún centro cerca', %s, 'Sin sucursal')"""
+            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'No se han registrado sucursales', %s, 'Sin sucursal')"""
             cursor.execute(sql, (fecha_hoy, idTrabajador,))
             db.commit()
             cursor.close()
@@ -455,27 +478,136 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await context.bot.send_message(
                 chat_id=update.effective_chat.id
-                , text="No se ha podido realizar el fichaje. Verifica que estás en el centro asignado. Habla con tu supervisor. Gracias. Nombre del centro: " + ultimoNombreSucursal +  ". Distancia total: " + str(ultimadistancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(ultimaCoordenadaCentro)
-            )           
-       
+                , text="No se han registrado sucursales para tu usuario. Habla con tu supervisor. Gracias"
+            )
     else:
-        #INICIO - LOG
-        cursor=db.cursor()
-        sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'No se han registrado sucursales', %s, 'Sin sucursal')"""
-        cursor.execute(sql, (fecha_hoy, idTrabajador,))
-        db.commit()
-        cursor.close()
-        #FIN - LOG
+        #Podemos preguntar por el fichaje
+        sql = """SELECT id, horaini1, horafin1, horaini2, horafin2 FROM MotivoHoraBot WHERE idPersonal = %s AND fecha = CAST(%s as DATE)"""
+        cursor.execute(sql, (idTrabajador,fechaHoy,))
 
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id
-            , text="No se han registrado sucursales para tu usuario. Habla con tu supervisor. Gracias"
-        )
+        m = cursor.fetchone()
+
+        if m is None:
+            now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+            sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
+            if "ENTRADA" in tipoFichaje:
+                cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', 0, 0, idContrato, fechaHoy, 0, now, None, None, None,))
+                
+                await context.bot.send_message(
+                chat_id=update.effective_chat.id
+                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Fecha Hoy: " + str(fechaHoy)
+                )
+            if "SALIDA" in tipoFichaje:
+                
+                resultOk = False
+
+                mensajeError="Para fichar salida tienes que fichar primero entrada."
+
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id
+                    , text=mensajeError
+                )
+            db.commit()
+        if m:
+            if "ENTRADA" in tipoFichaje:
+                
+                #Si no exite horaIni1 se introduce del tiron.
+                if m[1] is None:
+                    sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME) WHERE id = %s"""
+                else:
+                    #Si existe horaIni1 y no ha fichado salida de la horaFin1 no puede fichar otra entrada. 
+                    if m[2] is None:
+                        resultOk = False
+
+                        mensajeError="Para poder fichar otra entrada tienes que fichar la salida de la primera entrada."
+
+                        await context.bot.send_message(
+                        chat_id=update.effective_chat.id
+                        , text=mensajeError)
+                    else:
+                        #Si la horaIni2 esta vacia esta introduciendo la segunda entrada.
+                        if m[3] is None:
+                            sql = """UPDATE MotivoHoraBot SET horaini2 = CAST(%s as TIME) WHERE id = %s"""
+                        else:
+                            resultOk = False
+
+                            mensajeError="Ya no puedes fichar mas entradas en la jornada de hoy."
+
+                            #Si ya exite la segunda entrada yo no puede fichar mas en el dia de hoy.
+                            await context.bot.send_message(
+                            chat_id=update.effective_chat.id
+                            , text=mensajeError)
+
+            if "SALIDA" in tipoFichaje:
+
+                #Si fechaIni1 es vacio no puede fichar salida
+                if m[1] is None:
+
+                    resultOk = False
+
+                    mensajeError="Para poder fichar salida primero tienes que fichar una entrada."
+
+                    await context.bot.send_message(
+                    chat_id=update.effective_chat.id
+                    , text=mensajeError)
+
+                else:
+                    if m[2] is None:
+                        sql = """UPDATE MotivoHoraBot SET horafin1 = CAST(%s as TIME) WHERE id = %s"""
+                    else:
+                        if m[3] is None:
+
+                            resultOk = False
+
+                            mensajeError="Para poder fichar salida  primero tienes que fichar una entrada."
+
+                            await context.bot.send_message(
+                            chat_id=update.effective_chat.id
+                            , text=mensajeError)
+
+                        else:
+                            if m[4] is None:
+                                sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
+                            else:
+                                resultOk = False
+
+                                mensajeError="Ya no puedes fichar mas salidas en la jornada de doy."
+
+                                await context.bot.send_message(
+                                chat_id=update.effective_chat.id
+                                , text=mensajeError)
+            
+        if resultOk:
+
+            idMotivoHoraBot = m[0]
+            now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+            cursor.execute(sql, (now, idMotivoHoraBot,))
+            db.commit()
+
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id
+                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " Fecha Hoy: " + str(fechaHoy) 
+            )
+
+            #INICIO - LOG
+            cursor=db.cursor()
+            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se inserta el fichaje correctamente', %s, %s)"""
+            cursor.execute(sql, (fecha_hoy, distancia, 0,))
+            db.commit()
+            #FIN - LOG
+        else:
+            #INICIO - LOG
+            cursor=db.cursor()
+            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', %s, %s, %s)"""
+            cursor.execute(sql, (fecha_hoy, mensajeError ,distancia, 0,))
+            db.commit()
+            #FIN - LOG
 
 if __name__ == '__main__':
-    #token = os.environ['TOKEN']
+    token = os.environ['TOKEN']
     # Se ejecuta para el /start
-    application = ApplicationBuilder().token('5492068105:AAE0swbyKtrzF1DxskthAcAGuj14Xn8uxQc').build()
+    application = ApplicationBuilder().token(token).build()
     
     start_handler = CommandHandler('start', start)
     entrada_handler = CommandHandler('entrada', fichajeEntrada)
