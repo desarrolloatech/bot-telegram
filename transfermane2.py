@@ -338,7 +338,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             
                             await context.bot.send_message(
                             chat_id=update.effective_chat.id
-                            , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1)
+                            , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " - Fecha: " + str(now)
                             )
                         if "SALIDA" in tipoFichaje:
                             
@@ -429,7 +429,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                         await context.bot.send_message(
                             chat_id=update.effective_chat.id
-                            , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Codigo Fichaje: " + str(idMotivoHoraBot)
+                            , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " - Fecha: " + str(now)
                         )
 
                         #INICIO - LOG
@@ -496,7 +496,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
                 await context.bot.send_message(
                 chat_id=update.effective_chat.id
-                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Fecha Hoy: " + str(fechaHoy)
+                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Fecha Hoy: " + str(now)
                 )
             if "SALIDA" in tipoFichaje:
                 
@@ -587,7 +587,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await context.bot.send_message(
                 chat_id=update.effective_chat.id
-                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " Fecha Hoy: " + str(fechaHoy) 
+                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " Fecha Hoy: " + str(now) 
             )
 
             #INICIO - LOG
