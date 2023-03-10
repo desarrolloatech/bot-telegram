@@ -614,6 +614,12 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             db.commit()
             #FIN - LOG
 
+    else:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id
+            , text="No tienes permisos" 
+        )
+
 if __name__ == '__main__':
     token = os.environ['TOKEN']
     # Se ejecuta para el /start
