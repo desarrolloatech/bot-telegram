@@ -492,6 +492,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 , text="No se han registrado sucursales para tu usuario. Habla con tu supervisor. Gracias"
             )
     elif idEmpresa == 8 and nombreBot == 'mobility':
+        resultOk = True
         #Podemos preguntar por el fichaje
         sql = """SELECT id, horaini1, horafin1, horaini2, horafin2 FROM MotivoHoraBot WHERE idPersonal = %s AND fecha = CAST(%s as DATE)"""
         cursor.execute(sql, (idTrabajador,fechaHoy,))
