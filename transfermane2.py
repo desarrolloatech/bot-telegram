@@ -41,6 +41,8 @@ host_bbdd = os.environ['host_bbdd']
 pass_bbdd = os.environ['pass_bbdd']
 user_bbdd = os.environ['user_bbdd']
 
+nombreBot = os.environ['nombre']
+
 #HOMESTEAD
 """ db = MySQLdb.connect(host="192.168.10.10",    # localhost
                  user="homestead",         #  username
@@ -160,6 +162,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global idTrabajador
     global idEmpresa
     global fecha_hoy
+    global nombreBot
 
 
     fecha_hoy = datetime.datetime.today()
@@ -177,6 +180,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             resTxt = "No es un codigo válido, por favor, introduce un código válido"
 
         if validateNumeric:
+            #coger el nombre del bot
+
             cursor=db.cursor()
 
             sql = """SELECT apellidos, idPersonal, idEmpresa FROM Personal WHERE codigotrabajador = %s;"""
@@ -191,8 +196,12 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             idTrabajador = m[1]
             idEmpresa = m[2]
             resTxt = "Hola " + m[0] + ". Ahora puedes registrar tu jornada. Debes seleccionar el comando correspondiente del menú"
-
-            checkCodigoTrabajador = True
+            
+            if nombreBot == 'mobility' and idEmpresa != 8:
+                resTxt = "No tienes permiso para registar horas. Habla con el administrador."
+            
+            if nombreBot == 'transfermane' and idEmpresa == 8:
+                resTxt = "No tienes permiso para registar horas. Habla con el administrador."
 
             #INICIO - LOG
             cursor=db.cursor()
@@ -249,6 +258,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global now
     global current_pos
     global fecha_hoy
+    global nombreBot
 
     fecha_hoy = datetime.datetime.today()
 
@@ -271,7 +281,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     idContrato = m[0]
 
-    if idEmpresa != 8:
+    if idEmpresa != 8 and nombreBot == 'transfermane':
 
 
         cursor=db.cursor()
@@ -480,7 +490,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chat_id=update.effective_chat.id
                 , text="No se han registrado sucursales para tu usuario. Habla con tu supervisor. Gracias"
             )
-    else:
+    elif idEmpresa == 8 and nombreBot == 'mobility':
         #Podemos preguntar por el fichaje
         sql = """SELECT id, horaini1, horafin1, horaini2, horafin2 FROM MotivoHoraBot WHERE idPersonal = %s AND fecha = CAST(%s as DATE)"""
         cursor.execute(sql, (idTrabajador,fechaHoy,))
