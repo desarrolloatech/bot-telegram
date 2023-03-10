@@ -341,6 +341,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                     if m is None:
                         now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+                        fecha_hoy_mensaje = datetime.datetime.now(zone_fr)
                         sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
                                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
                         if "ENTRADA" in tipoFichaje:
@@ -348,7 +349,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             
                             await context.bot.send_message(
                             chat_id=update.effective_chat.id
-                            , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " - Fecha: " + str(now)
+                            , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " - Fecha: " + str(fecha_hoy_mensaje)
                             )
                         if "SALIDA" in tipoFichaje:
                             
@@ -499,6 +500,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if m is None:
             now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+            fecha_hoy_mensaje = datetime.datetime.now(zone_fr)
             sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
             if "ENTRADA" in tipoFichaje:
@@ -506,7 +508,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
                 await context.bot.send_message(
                 chat_id=update.effective_chat.id
-                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Fecha Hoy: " + str(now)
+                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Fecha Hoy: " + str(fecha_hoy_mensaje)
                 )
             if "SALIDA" in tipoFichaje:
                 
@@ -592,12 +594,13 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             idMotivoHoraBot = m[0]
             now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+            fecha_hoy_mensaje = datetime.datetime.now(zone_fr)
             cursor.execute(sql, (now, idMotivoHoraBot,))
             db.commit()
 
             await context.bot.send_message(
                 chat_id=update.effective_chat.id
-                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " Fecha Hoy: " + str(now) 
+                , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " Fecha Hoy: " + str(fecha_hoy_mensaje) 
             )
 
             #INICIO - LOG
