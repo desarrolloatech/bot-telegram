@@ -274,7 +274,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     cursor=db.cursor()
     sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se coge las coordenadas de cada uno', %s, %s)"""
-    cursor.execute(sql, (fecha_hoy, message, 1,))
+    cursor.execute(sql, (fecha_hoy, message.location, 1,))
     db.commit()
 
     current_pos = (message.location.latitude, message.location.longitude)
