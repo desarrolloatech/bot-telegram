@@ -508,10 +508,10 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if m is None:
             now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
             fecha_hoy_mensaje = datetime.datetime.now(zone_fr)
-            sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
+            sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2, latE, lngE) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s, %s, %s)"""
             if "ENTRADA" in tipoFichaje:
-                cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', 0, 0, idContrato, fechaHoy, 0, now, None, None, None))
+                cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', 0, 0, idContrato, fechaHoy, 0, now, None, None, None, latitud, longitud))
                 
                 await context.bot.send_message(
                 chat_id=update.effective_chat.id
