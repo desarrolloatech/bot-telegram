@@ -35,6 +35,8 @@ codigoTrabajador = 0
 idTrabajador = 0
 idEmpresa = 0
 current_pos = ""
+latitud = 0
+longitud = 0
 
 bd_bbdd = os.environ['bd_bbdd']
 host_bbdd = os.environ['host_bbdd']
@@ -257,6 +259,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global zone_fr
     global now
     global current_pos
+    global latitud
+    global longitud
     global fecha_hoy
     global nombreBot
 
@@ -273,6 +277,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = update.message
 
     current_pos = (message.location.latitude, message.location.longitude)
+    latitud = message.location.latitude
+    longitud = message.location.longitude
 
     cursor=db.cursor()
     sql = """SELECT idContrato FROM Contrato WHERE idPersonal = %s AND ultimovigente = 1;"""
@@ -505,7 +511,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
             if "ENTRADA" in tipoFichaje:
-                cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', 0, 0, idContrato, fechaHoy, 0, now, None, None, None,))
+                cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', 0, 0, idContrato, fechaHoy, 0, now, None, None, None))
                 
                 await context.bot.send_message(
                 chat_id=update.effective_chat.id
@@ -527,7 +533,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
                 #Si no exite horaIni1 se introduce del tiron.
                 if m[1] is None:
-                    sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME) WHERE id = %s"""
+                    sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME), latE = %s, lngE = %s WHERE id = %s"""
                 else:
                     #Si existe horaIni1 y no ha fichado salida de la horaFin1 no puede fichar otra entrada. 
                     if m[2] is None:
@@ -541,7 +547,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     else:
                         #Si la horaIni2 esta vacia esta introduciendo la segunda entrada.
                         if m[3] is None:
-                            sql = """UPDATE MotivoHoraBot SET horaini2 = CAST(%s as TIME) WHERE id = %s"""
+                            sql = """UPDATE MotivoHoraBot SET horaini2 = CAST(%s as TIME), latE = %s, lngE = %s  WHERE id = %s"""
                         else:
                             resultOk = False
 
@@ -567,7 +573,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 else:
                     if m[2] is None:
-                        sql = """UPDATE MotivoHoraBot SET horafin1 = CAST(%s as TIME) WHERE id = %s"""
+                        sql = """UPDATE MotivoHoraBot SET horafin1 = CAST(%s as TIME), latS = %s, lngS = %s  WHERE id = %s"""
                     else:
                         if m[3] is None:
 
@@ -581,7 +587,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                         else:
                             if m[4] is None:
-                                sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME) WHERE id = %s"""
+                                sql = """UPDATE MotivoHoraBot SET horafin2 = CAST(%s as TIME), latS = %s, lngS = %s  WHERE id = %s"""
                             else:
                                 resultOk = False
 
@@ -596,7 +602,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             idMotivoHoraBot = m[0]
             now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
             fecha_hoy_mensaje = datetime.datetime.now(zone_fr)
-            cursor.execute(sql, (now, idMotivoHoraBot,))
+            cursor.execute(sql, (now, latitud, longitud, idMotivoHoraBot,))
             db.commit()
 
             await context.bot.send_message(
