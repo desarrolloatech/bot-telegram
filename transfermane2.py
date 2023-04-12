@@ -459,8 +459,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                         #INICIO - LOG
                         cursor=db.cursor()
-                        sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', %s, 'Se inserta el fichaje correctamente', %s, %s, CAST(%s as TIME))"""
-                        cursor.execute(sql, (fecha_hoy, idTrabajador, distancia, idSucursal, now,))
+                        sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', %s, CONCAT('Se inserta el fichaje correctamente ', %s), %s, %s, CAST(%s as TIME))"""
+                        cursor.execute(sql, (fecha_hoy, idTrabajador, tipoFichaje ,distancia, idSucursal, now,))
                         db.commit()
                         #FIN - LOG
                     else:
@@ -620,8 +620,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             #INICIO - LOG
             cursor=db.cursor()
-            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', %s, 'Se inserta el fichaje correctamente', %s, %s, CAST(%s as TIME))"""
-            cursor.execute(sql, (fecha_hoy, idTrabajador, 'SIN DISTANCIA', 0, now,))
+            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', %s, CONCAT('Se inserta el fichaje correctamente ', %s), %s, %s, CAST(%s as TIME))"""
+            cursor.execute(sql, (fecha_hoy, idTrabajador, tipoFichaje, 'SIN DISTANCIA', 0, now,))
             db.commit()
             #FIN - LOG
         else:
