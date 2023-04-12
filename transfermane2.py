@@ -97,6 +97,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global codigoTrabajador
     global current_pos
     global fecha_hoy
+    global now
+    global zone_fr
+
+    now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
 
     checkCodigoTrabajador = False
     idTrabajador = 0
@@ -115,8 +119,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     #INICIO - LOG
     cursor=db.cursor()
-    sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s,'start', 'Sin usuario', 'Se inicia la conexión', 'Sin posición', 'Sin sucursal')"""
-    cursor.execute(sql, (fecha_hoy,))
+    sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s,'start', 'Sin usuario', 'Se inicia la conexión', 'Sin posición', 'Sin sucursal', CAST(%s as TIME))"""
+    cursor.execute(sql, (fecha_hoy, now,))
     db.commit()
     cursor.close()
     #FIN - LOG
@@ -289,6 +293,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     idContrato = m[0]
 
+    now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+
     if idEmpresa != 8 and nombreBot == 'transfermane':
 
 
@@ -334,8 +340,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 #INICIO - LOG
                 cursor=db.cursor()
-                sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se coge las coordenadas de cada uno', %s, %s)"""
-                cursor.execute(sql, (fecha_hoy, distancia, idSucursal,))
+                sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', %s, 'Se coge las coordenadas de cada uno', %s, %s, CAST(%s as TIME))"""
+                cursor.execute(sql, (fecha_hoy, idTrabajador, distancia, idSucursal, now))
                 db.commit()
                 #FIN - LOG
 
@@ -453,15 +459,15 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                         #INICIO - LOG
                         cursor=db.cursor()
-                        sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se inserta el fichaje correctamente', %s, %s)"""
-                        cursor.execute(sql, (fecha_hoy, distancia, idSucursal,))
+                        sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', %s, 'Se inserta el fichaje correctamente', %s, %s, CAST(%s as TIME))"""
+                        cursor.execute(sql, (fecha_hoy, idTrabajador, distancia, idSucursal, now,))
                         db.commit()
                         #FIN - LOG
                     else:
                         #INICIO - LOG
                         cursor=db.cursor()
-                        sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', %s, %s, %s)"""
-                        cursor.execute(sql, (fecha_hoy, mensajeError ,distancia, idSucursal,))
+                        sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', %s, %s, %s, %s, CAST(%s as TIME))"""
+                        cursor.execute(sql, (fecha_hoy, idTrabajador, mensajeError ,distancia, idSucursal, now,))
                         db.commit()
                         #FIN - LOG
 
@@ -475,8 +481,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 #INICIO - LOG
                 cursor=db.cursor()
-                sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'No se ha podido vertificar el fichaje. No está en ningún centro cerca', %s, 'Sin sucursal')"""
-                cursor.execute(sql, (fecha_hoy, idTrabajador,))
+                sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', 'fichaje', 'No se ha podido vertificar el fichaje. No está en ningún centro cerca', %s, 'Sin sucursal', CAST(%s as TIME))"""
+                cursor.execute(sql, (fecha_hoy, idTrabajador, now,))
                 db.commit()
                 cursor.close()
                 #FIN - LOG
@@ -489,8 +495,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             #INICIO - LOG
             cursor=db.cursor()
-            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'No se han registrado sucursales', %s, 'Sin sucursal')"""
-            cursor.execute(sql, (fecha_hoy, idTrabajador,))
+            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', 'fichaje', 'No se han registrado sucursales', %s, 'Sin sucursal', CAST(%s as TIME))"""
+            cursor.execute(sql, (fecha_hoy, idTrabajador, now,))
             db.commit()
             cursor.close()
             #FIN - LOG
@@ -614,15 +620,15 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             #INICIO - LOG
             cursor=db.cursor()
-            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se inserta el fichaje correctamente', %s, %s)"""
-            cursor.execute(sql, (fecha_hoy, 'SIN DISTANCIA', 0,))
+            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', %s, 'Se inserta el fichaje correctamente', %s, %s, CAST(%s as TIME))"""
+            cursor.execute(sql, (fecha_hoy, idTrabajador, 'SIN DISTANCIA', 0, now,))
             db.commit()
             #FIN - LOG
         else:
             #INICIO - LOG
             cursor=db.cursor()
-            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', %s, %s, %s)"""
-            cursor.execute(sql, (fecha_hoy, mensajeError ,'SIN DISTANCIA', 0,))
+            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'location', %s, %s, %s, %s, CAST(%s as TIME))"""
+            cursor.execute(sql, (fecha_hoy, idTrabajador, mensajeError ,'SIN DISTANCIA', 0, now,))
             db.commit()
             #FIN - LOG
 
