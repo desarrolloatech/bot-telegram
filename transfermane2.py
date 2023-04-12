@@ -165,8 +165,10 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global idEmpresa
     global fecha_hoy
     global nombreBot
+    global now
+    global zone_fr
 
-
+    now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
     fecha_hoy = datetime.datetime.today()
 
     if not checkCodigoTrabajador:
@@ -174,8 +176,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not validateNumeric:
             #INICIO - LOG
             cursor=db.cursor()
-            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'echo', %s, 'Se inserta incorrectamente el código del trabajador', 'Sin posición', 'Sin sucursal')"""
-            cursor.execute(sql, (fecha_hoy, update.message.text,))
+            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'echo', %s, 'NO se inserta el código del trabajador', 'Sin posición', 'Sin sucursal', CAST(%s as TIME))"""
+            cursor.execute(sql, (fecha_hoy, update.message.text, now))
             db.commit()
             cursor.close()
             #FIN - LOG
@@ -207,8 +209,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             #INICIO - LOG
             cursor=db.cursor()
-            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'echo', %s, 'Se inserta correctamente el código del trabajador', 'Sin posición', 'Sin sucursal')"""
-            cursor.execute(sql, (fecha_hoy, valor,))
+            sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s, 'echo', %s, 'Se inserta correctamente el código del trabajador', 'Sin posición', 'Sin sucursal', CAST(%s as TIME))"""
+            cursor.execute(sql, (fecha_hoy, valor, now,))
             db.commit()
             cursor.close()
             #FIN - LOG
@@ -613,14 +615,14 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             #INICIO - LOG
             cursor=db.cursor()
             sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', 'Se inserta el fichaje correctamente', %s, %s)"""
-            cursor.execute(sql, (fecha_hoy, distancia, 0,))
+            cursor.execute(sql, (fecha_hoy, 'SIN DISTANCIA', 0,))
             db.commit()
             #FIN - LOG
         else:
             #INICIO - LOG
             cursor=db.cursor()
             sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal) VALUES (%s, 'location', 'fichaje', %s, %s, %s)"""
-            cursor.execute(sql, (fecha_hoy, mensajeError ,distancia, 0,))
+            cursor.execute(sql, (fecha_hoy, mensajeError ,'SIN DISTANCIA', 0,))
             db.commit()
             #FIN - LOG
 
