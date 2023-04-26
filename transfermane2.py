@@ -38,43 +38,75 @@ latitud = 0
 longitud = 0
 entra = False
 sale = False
-bd_bbdd = 'transfermane'
-host_bbdd = '192.168.56.56'
-pass_bbdd = 'secret'
-user_bbdd = 'homestead'
+#bd_bbdd = 'transfermane'
+#host_bbdd = '192.168.56.56'
+#pass_bbdd = 'secret'
+#user_bbdd = 'homestead'
 
-nombreBot = 'Bottele'
+#nombreBot = 'Bottele'
 
-#HOMESTEAD
-"""db = MySQLdb.connect(host=host_bbdd,    # localhost
-                 user=user_bbdd,         #  username
-                 passwd=pass_bbdd,  #  password
-                 db=bd_bbdd)        # name of the data base"""
+bd_bbdd = os.environ['bd_bbdd']
+host_bbdd = os.environ['host_bbdd']
+pass_bbdd = os.environ['pass_bbdd']
+user_bbdd = os.environ['user_bbdd']
+
+nombreBot = os.environ['nombre']
+
+#LOCAL
+"""
 try:
     db = MySQLdb.connect(host="192.168.56.56",    # localhost
                  user="homestead",         #  username
                  passwd="secret",  #  password
-                 db="transfermane")        # name of the data base """
+                 db="transfermane")        # name of the data base
+
+    
+    # If connection is not successful
+except:
+    print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
+"""
+#DESARROLLO
+
+try:
+    db = MySQLdb.connect(host=host_bbdd,    # localhost
+                 user=user_bbdd,         #  username
+                 passwd=pass_bbdd,  #  password
+                 db=bd_bbdd)        # name of the data base
 
     
     # If connection is not successful
 except:
     print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
 
+
 #Función para conectar por MySQLdb
 def mysqlconnect():
     #Trying to connect
+    #LOCAL
+    """
     try:
         db = MySQLdb.connect(host='192.168.56.56',    # localhost
-                 user="homestead",         #  username
-                 passwd="secret",  #  password
-                 db="botatech")        # name of the data base
+                user="homestead",         #  username
+                passwd="secret",  #  password
+                db="botatech")        # name of the data base
+    # If connection is not successful
+    except:
+        print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
+        return 0
+    """
+    try:
+        db = MySQLdb.connect(host=host_bbdd,    # localhost
+                 user=user_bbdd,         #  username
+                 passwd=pass_bbdd,  #  password
+                 db=bd_bbdd)        # name of the data base
     # If connection is not successful
     except:
         print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
         return 0
     # If Connection Is Successful
     print("Conectado a la BBDD")
+
+    
  
     # Making Cursor Object For Query Execution
     cursor=db.cursor()
@@ -304,7 +336,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
 
-    if idEmpresa != 8 and nombreBot == 'Bottele':
+    if idEmpresa != 8 and nombreBot == 'transfermane':
 
 
         cursor=db.cursor()
@@ -658,7 +690,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 if __name__ == '__main__':
-    token = '5816796006:AAGMjqM4Br5GEY70NFtUQegrdF-HM1_8khs'
+    #token = '5816796006:AAGMjqM4Br5GEY70NFtUQegrdF-HM1_8khs'
+    token = os.environ['TOKEN']
     # Se ejecuta para el /start
     application = ApplicationBuilder().token(token).build()
     
