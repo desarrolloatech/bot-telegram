@@ -307,13 +307,6 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global sale
     
     fecha_hoy = datetime.datetime.today()
-
-    if entra and update.message.reply_to_message == None:
-        tipoFichaje = ("Vas a fichar la HORA DE ENTRADA, si es así pulsa sobre el botón fichar, si no elije otro comando")
-    if sale and update.message.reply_to_message == None:
-        tipoFichaje = ("Vas a fichar la HORA DE SALIDA, si es así pulsa sobre el botón fichar, si no elije otro comando")
-    if entra == False and sale == False:
-        tipoFichaje = update.message.reply_to_message.text  
     fin = 0
     
     fechaHoy = update.message.date
@@ -323,9 +316,16 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         message = update.message
 
-    current_pos = (update.message.location.latitude, update.message.location.longitude)
-    latitud = update.message.location.latitude
-    longitud = update.message.location.longitude
+    if entra and message.reply_to_message == None:
+        tipoFichaje = ("Vas a fichar la HORA DE ENTRADA, si es así pulsa sobre el botón fichar, si no elije otro comando")
+    if sale and message.reply_to_message == None:
+        tipoFichaje = ("Vas a fichar la HORA DE SALIDA, si es así pulsa sobre el botón fichar, si no elije otro comando")
+    if entra == False and sale == False:
+        tipoFichaje = message.reply_to_message.text  
+
+    current_pos = (message.location.latitude, message.location.longitude)
+    latitud = message.location.latitude
+    longitud = message.location.longitude
 
     cursor=db.cursor()
     sql = """SELECT idContrato FROM Contrato WHERE idPersonal = %s AND ultimovigente = 1;"""
