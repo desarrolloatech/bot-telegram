@@ -29,7 +29,6 @@ horaFin1 = "Hora fin 1"
 
 horaIni2 = "Hora inicio 2"
 horaFin2 = "Hora fin 2"
-
 checkCodigoTrabajador = False
 codigoTrabajador = 0
 idTrabajador = 0
@@ -37,24 +36,27 @@ idEmpresa = 0
 current_pos = ""
 latitud = 0
 longitud = 0
+entra = False
+sale = False
+bd_bbdd = 'transfermane'
+host_bbdd = '192.168.56.56'
+pass_bbdd = 'secret'
+user_bbdd = 'homestead'
 
-bd_bbdd = os.environ['bd_bbdd']
-host_bbdd = os.environ['host_bbdd']
-pass_bbdd = os.environ['pass_bbdd']
-user_bbdd = os.environ['user_bbdd']
-
-nombreBot = os.environ['nombre']
+nombreBot = 'Bottele'
 
 #HOMESTEAD
-""" db = MySQLdb.connect(host="192.168.10.10",    # localhost
-                 user="homestead",         #  username
-                 passwd="secret",  #  password
-                 db="uati")        # name of the data base """
-try:
-    db = MySQLdb.connect(host=host_bbdd,    # localhost
+"""db = MySQLdb.connect(host=host_bbdd,    # localhost
                  user=user_bbdd,         #  username
                  passwd=pass_bbdd,  #  password
-                 db=bd_bbdd)        # name of the data base
+                 db=bd_bbdd)        # name of the data base"""
+try:
+    db = MySQLdb.connect(host="192.168.56.56",    # localhost
+                 user="homestead",         #  username
+                 passwd="secret",  #  password
+                 db="transfermane")        # name of the data base """
+
+    
     # If connection is not successful
 except:
     print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
@@ -63,10 +65,10 @@ except:
 def mysqlconnect():
     #Trying to connect
     try:
-        db = MySQLdb.connect(host=host_bbdd,    # localhost
-                 user=user_bbdd,         #  username
-                 passwd=pass_bbdd,  #  password
-                 db=bd_bbdd)        # name of the data base
+        db = MySQLdb.connect(host='192.168.56.56',    # localhost
+                 user="homestead",         #  username
+                 passwd="secret",  #  password
+                 db="botatech")        # name of the data base
     # If connection is not successful
     except:
         print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
@@ -132,14 +134,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def fichajeEntrada(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+    global entra
     #Nos debe enviar su identificador, hasta que no lo haga no puede continuar
     location_keyboard = telegram.KeyboardButton("Pulsa para fichar entrada", request_location=True)
     #location_keyboard = telegram.Location()
     #contact_keyboard = telegram.KeyboardButton(text="send_contact", request_contact=True)
     custom_keyboard = [[location_keyboard]]
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
-
+    entra = True
     await context.bot.send_message(
         chat_id=update.effective_chat.id
         , text="Vas a fichar la HORA DE ENTRADA, si es así pulsa sobre el botón fichar, si no elije otro comando"
@@ -147,14 +149,14 @@ async def fichajeEntrada(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def fichajeSalida(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+    global sale
     #Nos debe enviar su identificador, hasta que no lo haga no puede continuar
     location_keyboard = telegram.KeyboardButton("Pulsa para fichar salida", request_location=True)
-    #location_keyboard = telegram.Location()
+    #location_keyboard = telegram.Location()KeyboardButton
     #contact_keyboard = telegram.KeyboardButton(text="send_contact", request_contact=True)
     custom_keyboard = [[location_keyboard]]
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
-
+    sale = True
     await context.bot.send_message(
         chat_id=update.effective_chat.id
         , text="Vas a fichar la HORA DE SALIDA, si es así pulsa sobre el botón fichar, si no elije otro comando"
@@ -269,10 +271,17 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global longitud
     global fecha_hoy
     global nombreBot
-
+    global entra 
+    global sale
+    
     fecha_hoy = datetime.datetime.today()
 
-    tipoFichaje = update.message.reply_to_message.text
+    if entra and update.message.reply_to_message == None:
+        tipoFichaje = ("Vas a fichar la HORA DE ENTRADA, si es así pulsa sobre el botón fichar, si no elije otro comando")
+    if sale and update.message.reply_to_message == None:
+        tipoFichaje = ("Vas a fichar la HORA DE SALIDA, si es así pulsa sobre el botón fichar, si no elije otro comando")
+    if entra == False and sale == False:
+        tipoFichaje = update.message.reply_to_message.text  
     fin = 0
     
     fechaHoy = update.message.date
@@ -282,9 +291,9 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         message = update.message
 
-    current_pos = (message.location.latitude, message.location.longitude)
-    latitud = message.location.latitude
-    longitud = message.location.longitude
+    current_pos = (update.message.location.latitude, update.message.location.longitude)
+    latitud = update.message.location.latitude
+    longitud = update.message.location.longitude
 
     cursor=db.cursor()
     sql = """SELECT idContrato FROM Contrato WHERE idPersonal = %s AND ultimovigente = 1;"""
@@ -295,7 +304,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
 
-    if idEmpresa != 8 and nombreBot == 'transfermane':
+    if idEmpresa != 8 and nombreBot == 'Bottele':
 
 
         cursor=db.cursor()
@@ -310,6 +319,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ultimoNombreSucursal = ""
             entraDis = False
             resultOk = True
+            resultInicio = True
             mensajeError = ""
 
             for suc in m:
@@ -318,20 +328,20 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 #Cogemos las coordenadas de todas las sucursales en las que está inscrito este trabajador
                 sql = """SELECT latitud, longitud, nombre, idCliente FROM Sucursal WHERE idSucursal = %s;"""
                 cursor.execute(sql, (idSucursal,))
-                m = cursor.fetchone() 
+                m = cursor.fetchone()
 
                 coords_1 = (m[0], m[1])
 
                 nombreSucursal = m[2]
                 idCliente = m[3]
-                
+
 
                 distancia = geopy.distance.geodesic(current_pos, coords_1).km
 
                 if not entraDis:
                     ultimadistancia = distancia
                     entraDis = True
-                
+
                 if ultimadistancia >= distancia:
                     ultimadistancia = distancia
                     ultimaCoordenadaCentro = coords_1
@@ -346,7 +356,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 #FIN - LOG
 
                 #Si la distancia es menor que 11 entonces sí está en el sitio y procedemos a registrar el fichaje
-                if distancia < 0.045:
+                if distancia < 0.061:
                     #Podemos preguntar por el fichaje
                     sql = """SELECT id, horaini1, horafin1, horaini2, horafin2 FROM MotivoHoraBot WHERE idPersonal = %s AND fecha = CAST(%s as DATE)"""
                     cursor.execute(sql, (idTrabajador,fechaHoy,))
@@ -354,19 +364,22 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     m = cursor.fetchone()
 
                     if m is None:
+                        resultInicio = False
                         now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
                         fecha_hoy_mensaje = datetime.datetime.now(zone_fr)
                         sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2) 
                                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s)"""
                         if "ENTRADA" in tipoFichaje:
                             cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', idCliente, idSucursal, idContrato, fechaHoy, 0, now, None, None, None,))
-                            
+                            db.commit()
+
                             await context.bot.send_message(
                             chat_id=update.effective_chat.id
                             , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " - Fecha: " + str(fecha_hoy_mensaje)
                             )
+                            entra = False
                         if "SALIDA" in tipoFichaje:
-                            
+
                             resultOk = False
 
                             mensajeError="Para fichar salida tienes que fichar primero entrada."
@@ -375,15 +388,16 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                 chat_id=update.effective_chat.id
                                 , text=mensajeError
                             )
+                            sale = False
                         db.commit()
                     if m:
                         if "ENTRADA" in tipoFichaje:
-                            
+
                             #Si no exite horaIni1 se introduce del tiron.
                             if m[1] is None:
                                 sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME) WHERE id = %s"""
                             else:
-                                #Si existe horaIni1 y no ha fichado salida de la horaFin1 no puede fichar otra entrada. 
+                                #Si existe horaIni1 y no ha fichado salida de la horaFin1 no puede fichar otra entrada.
                                 if m[2] is None:
                                     resultOk = False
 
@@ -405,6 +419,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                         await context.bot.send_message(
                                         chat_id=update.effective_chat.id
                                         , text=mensajeError)
+                            entra = False
 
                         if "SALIDA" in tipoFichaje:
 
@@ -444,18 +459,18 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                             await context.bot.send_message(
                                             chat_id=update.effective_chat.id
                                             , text=mensajeError)
-                        
+                            sale = False
                     if resultOk:
+                        if resultInicio:
+                            idMotivoHoraBot = m[0]
+                            now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+                            cursor.execute(sql, (now, idMotivoHoraBot,))
+                            db.commit()
 
-                        idMotivoHoraBot = m[0]
-                        now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
-                        cursor.execute(sql, (now, idMotivoHoraBot,))
-                        db.commit()
-
-                        await context.bot.send_message(
-                            chat_id=update.effective_chat.id
-                            , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " - Fecha: " + str(now)
-                        )
+                            await context.bot.send_message(
+                                chat_id=update.effective_chat.id
+                                , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " - Fecha: " + str(now)
+                            )
 
                         #INICIO - LOG
                         cursor=db.cursor()
@@ -525,6 +540,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chat_id=update.effective_chat.id
                 , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Fecha Hoy: " + str(fecha_hoy_mensaje)
                 )
+                entra = False
             if "SALIDA" in tipoFichaje:
                 
                 resultOk = False
@@ -535,6 +551,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     chat_id=update.effective_chat.id
                     , text=mensajeError
                 )
+                entra = False
             db.commit()
         if m:
             if "ENTRADA" in tipoFichaje:
@@ -565,6 +582,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             await context.bot.send_message(
                             chat_id=update.effective_chat.id
                             , text=mensajeError)
+                entra = False
 
             if "SALIDA" in tipoFichaje:
 
@@ -604,6 +622,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                 await context.bot.send_message(
                                 chat_id=update.effective_chat.id
                                 , text=mensajeError)
+                sale = False
             
         if resultOk:
 
@@ -639,7 +658,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 if __name__ == '__main__':
-    token = os.environ['TOKEN']
+    token = '5816796006:AAGMjqM4Br5GEY70NFtUQegrdF-HM1_8khs'
     # Se ejecuta para el /start
     application = ApplicationBuilder().token(token).build()
     
