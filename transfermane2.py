@@ -316,12 +316,13 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         message = update.message
 
+    tipoFichaje = message.reply_to_message.text  
+    
     if entra and message.reply_to_message == None:
         tipoFichaje = ("Vas a fichar la HORA DE ENTRADA, si es así pulsa sobre el botón fichar, si no elije otro comando")
     if sale and message.reply_to_message == None:
         tipoFichaje = ("Vas a fichar la HORA DE SALIDA, si es así pulsa sobre el botón fichar, si no elije otro comando")
-    if entra == False and sale == False:
-        tipoFichaje = message.reply_to_message.text  
+        
 
     current_pos = (message.location.latitude, message.location.longitude)
     latitud = message.location.latitude
