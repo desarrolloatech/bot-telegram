@@ -43,7 +43,7 @@ sale = False
 #pass_bbdd = 'secret'
 #user_bbdd = 'homestead'
 
-#nombreBot = 'Bottele'
+#nombreBot = 'transfermane'
 
 bd_bbdd = os.environ['bd_bbdd']
 host_bbdd = os.environ['host_bbdd']
@@ -53,19 +53,6 @@ user_bbdd = os.environ['user_bbdd']
 nombreBot = os.environ['nombre']
 
 #LOCAL
-"""
-try:
-    db = MySQLdb.connect(host="192.168.56.56",    # localhost
-                 user="homestead",         #  username
-                 passwd="secret",  #  password
-                 db="transfermane")        # name of the data base
-
-    
-    # If connection is not successful
-except:
-    print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
-"""
-#DESARROLLO
 
 try:
     db = MySQLdb.connect(host=host_bbdd,    # localhost
@@ -78,12 +65,25 @@ try:
 except:
     print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
 
+#DESARROLLO
+"""
+try:
+    db = MySQLdb.connect(host="192.168.56.56",    # localhost
+                 user="homestead",         #  username
+                 passwd="secret",  #  password
+                 db="transfermane")        # name of the data base
+
+    
+    # If connection is not successful
+except:
+    print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
+"""
 
 #Función para conectar por MySQLdb
 def mysqlconnect():
     #Trying to connect
     #LOCAL
-    """
+    
     try:
         db = MySQLdb.connect(host='192.168.56.56',    # localhost
                 user="homestead",         #  username
@@ -103,6 +103,7 @@ def mysqlconnect():
     except:
         print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
         return 0
+    """
     # If Connection Is Successful
     print("Conectado a la BBDD")
 
@@ -150,7 +151,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     #contact_keyboard = telegram.KeyboardButton(text="send_contact", request_contact=True)
     custom_keyboard = [[location_keyboard]]
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
-
+    
     #INICIO - LOG
     cursor=db.cursor()
     sql = """INSERT INTO log_bot(created_at, comando, usuario, mensaje, posicion, sucursal, hora) VALUES (%s,'start', 'Sin usuario', 'Se inicia la conexión', 'Sin posición', 'Sin sucursal', CAST(%s as TIME))"""
@@ -162,7 +163,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=update.effective_chat.id
         , text="Por favor, introduce tu identificador personal"
-        #, reply_markup=reply_markup
+        , reply_markup=telegram.ReplyKeyboardRemove()
     )
 
 async def fichajeEntrada(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -259,6 +260,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=update.effective_chat.id
         , text=resTxt
+        , reply_markup=telegram.ReplyKeyboardRemove()
     )
 
 async def caps(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -305,6 +307,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global nombreBot
     global entra 
     global sale
+    disSO = 0.061
     
     fecha_hoy = datetime.datetime.today()
     fin = 0
@@ -315,14 +318,15 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = update.edited_message
     else:
         message = update.message
-
-    tipoFichaje = message.reply_to_message.text  
-    
+        
+    if message.reply_to_message != None:
+        tipoFichaje = message.reply_to_message.text  
+        disSO = 0.042
     if entra and message.reply_to_message == None:
         tipoFichaje = ("Vas a fichar la HORA DE ENTRADA, si es así pulsa sobre el botón fichar, si no elije otro comando")
     if sale and message.reply_to_message == None:
         tipoFichaje = ("Vas a fichar la HORA DE SALIDA, si es así pulsa sobre el botón fichar, si no elije otro comando")
-        
+
 
     current_pos = (message.location.latitude, message.location.longitude)
     latitud = message.location.latitude
@@ -333,9 +337,12 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cursor.execute(sql, (idTrabajador,))
     m = cursor.fetchone()
 
-    idContrato = m[0]
+    if m != None: 
+        idContrato = m[0]
 
     now = datetime.datetime.now(zone_fr).strftime('%H:%M:%S')
+    hours, minutes, seconds = map(int, now.split(':'))
+    horaAct = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
     if idEmpresa != 8 and nombreBot == 'transfermane':
 
@@ -389,7 +396,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 #FIN - LOG
 
                 #Si la distancia es menor que 11 entonces sí está en el sitio y procedemos a registrar el fichaje
-                if distancia < 0.061:
+                if distancia < disSO:
                     #Podemos preguntar por el fichaje
                     sql = """SELECT id, horaini1, horafin1, horaini2, horafin2 FROM MotivoHoraBot WHERE idPersonal = %s AND fecha = CAST(%s as DATE)"""
                     cursor.execute(sql, (idTrabajador,fechaHoy,))
@@ -409,6 +416,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             await context.bot.send_message(
                             chat_id=update.effective_chat.id
                             , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " - Fecha: " + str(fecha_hoy_mensaje)
+                            , reply_markup=telegram.ReplyKeyboardRemove()
                             )
                             entra = False
                         if "SALIDA" in tipoFichaje:
@@ -420,25 +428,32 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             await context.bot.send_message(
                                 chat_id=update.effective_chat.id
                                 , text=mensajeError
+                                , reply_markup= telegram.ReplyKeyboardRemove()
                             )
                             sale = False
                         db.commit()
                     if m:
                         if "ENTRADA" in tipoFichaje:
-
                             #Si no exite horaIni1 se introduce del tiron.
                             if m[1] is None:
                                 sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME) WHERE id = %s"""
                             else:
+                                if (horaAct < m[1] + datetime.timedelta(hours=1) and m[1] is not None) and m[3] is None:
+                                    resultOk = False
+                                    await context.bot.send_message(
+                                    chat_id=update.effective_chat.id
+                                    , text="""Ya se ha registrado una hora"""
+                                    , reply_markup=telegram.ReplyKeyboardRemove())
                                 #Si existe horaIni1 y no ha fichado salida de la horaFin1 no puede fichar otra entrada.
-                                if m[2] is None:
+                                elif m[2] is None:
                                     resultOk = False
 
                                     mensajeError="Para poder fichar otra entrada tienes que fichar la salida de la primera entrada."
 
                                     await context.bot.send_message(
                                     chat_id=update.effective_chat.id
-                                    , text=mensajeError)
+                                    , text=mensajeError
+                                    , reply_markup=telegram.ReplyKeyboardRemove())
                                 else:
                                     #Si la horaIni2 esta vacia esta introduciendo la segunda entrada.
                                     if m[3] is None:
@@ -451,7 +466,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                         #Si ya exite la segunda entrada yo no puede fichar mas en el dia de hoy.
                                         await context.bot.send_message(
                                         chat_id=update.effective_chat.id
-                                        , text=mensajeError)
+                                        , text=mensajeError
+                                        , reply_markup=telegram.ReplyKeyboardRemove())
                             entra = False
 
                         if "SALIDA" in tipoFichaje:
@@ -465,10 +481,11 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                                 await context.bot.send_message(
                                 chat_id=update.effective_chat.id
-                                , text=mensajeError)
+                                , text=mensajeError
+                                ,  reply_markup=telegram.ReplyKeyboardRemove())
 
                             else:
-                                if m[2] is None:
+                                if (m[2] is None or (horaAct < (m[2] + datetime.timedelta(hours=1)) and m[2] is not None)) and m[3] is None:
                                     sql = """UPDATE MotivoHoraBot SET horafin1 = CAST(%s as TIME) WHERE id = %s"""
                                 else:
                                     if m[3] is None:
@@ -479,7 +496,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                                         await context.bot.send_message(
                                         chat_id=update.effective_chat.id
-                                        , text=mensajeError)
+                                        , text=mensajeError
+                                        ,  reply_markup=telegram.ReplyKeyboardRemove())
 
                                     else:
                                         if m[4] is None:
@@ -491,7 +509,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                                             await context.bot.send_message(
                                             chat_id=update.effective_chat.id
-                                            , text=mensajeError)
+                                            , text=mensajeError
+                                            , reply_markup=telegram.ReplyKeyboardRemove())
                             sale = False
                     if resultOk:
                         if resultInicio:
@@ -503,6 +522,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             await context.bot.send_message(
                                 chat_id=update.effective_chat.id
                                 , text="Se ha registrado correctamente tu fichaje en el centro: " + str(nombreSucursal) + ". Distancia total: " + str(distancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(coords_1) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " - Fecha: " + str(now)
+                                , reply_markup=telegram.ReplyKeyboardRemove()
                             )
 
                         #INICIO - LOG
@@ -538,6 +558,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id
                     , text="No se ha podido realizar el fichaje. Verifica que estás en el centro asignado. Habla con tu supervisor. Gracias. Nombre del centro: " + ultimoNombreSucursal +  ". Distancia total: " + str(ultimadistancia) + ". Tus coordenadas:" + str(current_pos) + " Coordenadas del centro: " + str(ultimaCoordenadaCentro)
+                    ,  reply_markup=telegram.ReplyKeyboardRemove()
                 )           
         
         else:
@@ -551,7 +572,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await context.bot.send_message(
                 chat_id=update.effective_chat.id
-                , text="No se han registrado sucursales para tu usuario. Habla con tu supervisor. Gracias"
+                , text="No se han registrado sucursales para tu usuario o No te has identificado correctamente. Habla con tu supervisor. Gracias"
+                ,  reply_markup=telegram.ReplyKeyboardRemove()
             )
     elif idEmpresa == 8 and nombreBot == 'mobility':
         resultOk = True
@@ -572,6 +594,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(
                 chat_id=update.effective_chat.id
                 , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Fecha Hoy: " + str(fecha_hoy_mensaje)
+                ,  reply_markup=telegram.ReplyKeyboardRemove()
                 )
                 entra = False
             if "SALIDA" in tipoFichaje:
@@ -583,15 +606,16 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id
                     , text=mensajeError
+                    , reply_markup=telegram.ReplyKeyboardRemove()
                 )
                 entra = False
             db.commit()
         if m:
             if "ENTRADA" in tipoFichaje:
-                
+
                 #Si no exite horaIni1 se introduce del tiron.
                 if m[1] is None:
-                    sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME), latE = %s, lngE = %s WHERE id = %s"""
+                        sql = """UPDATE MotivoHoraBot SET horaini1 = CAST(%s as TIME), latE = %s, lngE = %s WHERE id = %s"""
                 else:
                     #Si existe horaIni1 y no ha fichado salida de la horaFin1 no puede fichar otra entrada. 
                     if m[2] is None:
@@ -601,7 +625,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                         await context.bot.send_message(
                         chat_id=update.effective_chat.id
-                        , text=mensajeError)
+                        , text=mensajeError
+                        , reply_markup=telegram.ReplyKeyboardRemove())
                     else:
                         #Si la horaIni2 esta vacia esta introduciendo la segunda entrada.
                         if m[3] is None:
@@ -614,7 +639,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             #Si ya exite la segunda entrada yo no puede fichar mas en el dia de hoy.
                             await context.bot.send_message(
                             chat_id=update.effective_chat.id
-                            , text=mensajeError)
+                            , text=mensajeError
+                            , reply_markup=telegram.ReplyKeyboardRemove())
                 entra = False
 
             if "SALIDA" in tipoFichaje:
@@ -628,7 +654,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                     await context.bot.send_message(
                     chat_id=update.effective_chat.id
-                    , text=mensajeError)
+                    , text=mensajeError
+                    , reply_markup=telegram.ReplyKeyboardRemove())
 
                 else:
                     if m[2] is None:
@@ -642,7 +669,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                             await context.bot.send_message(
                             chat_id=update.effective_chat.id
-                            , text=mensajeError)
+                            , text=mensajeError
+                            , reply_markup=telegram.ReplyKeyboardRemove())
 
                         else:
                             if m[4] is None:
@@ -654,7 +682,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                                 await context.bot.send_message(
                                 chat_id=update.effective_chat.id
-                                , text=mensajeError)
+                                , text=mensajeError
+                                , reply_markup=telegram.ReplyKeyboardRemove())
                 sale = False
             
         if resultOk:
@@ -668,6 +697,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(
                 chat_id=update.effective_chat.id
                 , text="Se ha registrado correctamente tu fichaje. Tus coordenadas:" + str(current_pos) + " Codigo Fichaje: " + str(idMotivoHoraBot) + " Fecha Hoy: " + str(fecha_hoy_mensaje) 
+                , reply_markup=telegram.ReplyKeyboardRemove()
             )
 
             #INICIO - LOG
@@ -688,11 +718,12 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=update.effective_chat.id
             , text="No tienes permisos" 
+            , reply_markup=telegram.ReplyKeyboardRemove()
         )
 
 if __name__ == '__main__':
-    #token = '5816796006:AAGMjqM4Br5GEY70NFtUQegrdF-HM1_8khs'
-    token = os.environ['TOKEN']
+    token = '5524924236:AAEnH78pxCTLESmdFHop-uQAIEbp7NzcCLM'
+    #token = os.environ['TOKEN']
     # Se ejecuta para el /start
     application = ApplicationBuilder().token(token).build()
     
