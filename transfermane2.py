@@ -722,8 +722,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 if __name__ == '__main__':
-    token = '5524924236:AAEnH78pxCTLESmdFHop-uQAIEbp7NzcCLM'
-    #token = os.environ['TOKEN']
+    #token = '5524924236:AAEnH78pxCTLESmdFHop-uQAIEbp7NzcCLM'
+    token = os.environ['TOKEN']
     # Se ejecuta para el /start
     application = ApplicationBuilder().token(token).build()
     
