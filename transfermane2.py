@@ -83,7 +83,7 @@ except:
 def mysqlconnect():
     #Trying to connect
     #LOCAL
-    
+    """
     try:
         db = MySQLdb.connect(host='192.168.56.56',    # localhost
                 user="homestead",         #  username
@@ -103,7 +103,7 @@ def mysqlconnect():
     except:
         print("No se ha podido conectar a la BBDD, por favor, contacte con el administrador de la aplicación")
         return 0
-    """
+    
     # If Connection Is Successful
     print("Conectado a la BBDD")
 
