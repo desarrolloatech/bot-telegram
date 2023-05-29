@@ -589,7 +589,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             sql = """INSERT INTO MotivoHoraBot(usuario, idPersonal, idTipoMotivo, idTipoMotivo2, comentarios, idCliente, idSucursal, idContrato, fecha, horas, horaIni1, horaFin1, horaIni2, horaFin2, latE, lngE) 
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CAST(%s as DATE), %s, CAST(%s as TIME), %s, %s, %s, %s, %s)"""
             if "ENTRADA" in tipoFichaje:
-                cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', 0, 0, idContrato, fechaHoy, 0, now, None, None, None, latitud, longitud))
+                cursor.execute(sql, ('bot', idTrabajador, None, None, 'Telegram BOT', 58, 1510, idContrato, fechaHoy, 0, now, None, None, None, latitud, longitud))
                 
                 await context.bot.send_message(
                 chat_id=update.effective_chat.id
